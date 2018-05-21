@@ -3,9 +3,8 @@ package zk.jute
 import java.io._
 
 class CsvInputArchive(in:InputStream) extends InputArchive {
-  private val stream = new PushbackReader(new InputStreamReader(in,"UTF-8"))
 
-  private class CsvIndex extends Index {
+  private case object CsvIndex extends Index {
     override def done(): Boolean = {
       var c: Char = 0
       try {
@@ -19,6 +18,9 @@ class CsvInputArchive(in:InputStream) extends InputArchive {
 
     override def incr(): Unit = {}
   }
+
+
+  private val stream = new PushbackReader(new InputStreamReader(in,"UTF-8"))
 
   private def readField(tag:String): String = {
     val buf = new StringBuilder
@@ -90,7 +92,7 @@ class CsvInputArchive(in:InputStream) extends InputArchive {
     val c1 = stream.read().asInstanceOf[Char]
     val c2 = stream.read().asInstanceOf[Char]
     if(!(c1 == 'v' && c2 == '{')) throw new IOException("Error deserializing vector")
-    new CsvIndex
+    CsvIndex
   }
 
   override def endVector(tag: String): Unit = {
@@ -107,7 +109,7 @@ class CsvInputArchive(in:InputStream) extends InputArchive {
     val c1 = stream.read().asInstanceOf[Char]
     val c2 = stream.read().asInstanceOf[Char]
     if (!(c1 == 'm' && c2 == '{')) throw new IOException(s"Error deserializing $tag")
-    new CsvIndex
+    CsvIndex
   }
 
   override def endMap(tag: String): Unit = {

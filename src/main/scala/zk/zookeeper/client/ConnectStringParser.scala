@@ -1,5 +1,5 @@
 package zk.zookeeper.client
 
-class ConnectStringParser {
+class ConnectStringParser(connectString:String) {
 
 }

@@ -4,14 +4,10 @@ import java.io.{DataInput, DataInputStream, IOException, InputStream}
 import java.lang.Integer.getInteger
 
 class BinaryInputArchive(din:DataInput) extends InputArchive {
+  import BinaryInputArchive.BinaryIndex
+
   final val UNREASONABLE_LENGTH = "Unreasonable length = "
   private val in:DataInput = din
-
-  private case class BinaryIndex(nelems:Int) extends Index {
-    private var n: Int = nelems
-    override def done(): Boolean = n <= 0
-    override def incr(): Unit = n-=1
-  }
 
   override def readByte(tag: String): Byte = in.readByte()
   override def readBool(tag: String): Boolean = in.readBoolean()
@@ -61,5 +57,11 @@ class BinaryInputArchive(din:DataInput) extends InputArchive {
 
 object BinaryInputArchive {
   def getArchive(strm:InputStream):BinaryInputArchive = new BinaryInputArchive(new DataInputStream(strm))
+
+  private case class BinaryIndex(nelems:Int) extends Index {
+    private var n: Int = nelems
+    override def done(): Boolean = n <= 0
+    override def incr(): Unit = n-=1
+  }
 }
 

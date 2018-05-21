@@ -11,41 +11,7 @@ import org.xml.sax.helpers.DefaultHandler
 import scala.collection.mutable.ArrayBuffer
 
 class XmlInputArchive(in: InputStream) extends InputArchive {
-  private case class Value(t:String) {
-    private val typ = t
-    private val sb = new StringBuffer()
-
-    def addChars(buf:Array[Char], offset:Int, len:Int):Unit = sb.append(buf, offset, len)
-    def getValue:String = sb.toString
-    def getType:String = typ
-  }
-
-  private case class XMLParser(vlist:ArrayBuffer[Value]) extends DefaultHandler {
-    var valList:ArrayBuffer[Value] = vlist
-    private var charsValid = false
-
-    override def startDocument():Unit = {}
-    override def endDocument():Unit = {}
-    override def startElement(ns:String, sname:String, qname:String, attrs:Attributes):Unit = {
-      charsValid = false
-      qname match {
-        case "boolean" | "i4" | "int" | "string" | "double" | "ex:i1" | "ex:i8" | "ex:float" =>
-          charsValid = true
-          valList += Value(qname)
-        case "struct" | "array" =>
-          valList += Value(qname)
-      }
-    }
-    override def endElement(s:String, sname:String, qname:String):Unit = {
-      charsValid = false
-      qname match {
-        case "struct" | "array" => valList += Value("/"+qname)
-      }
-    }
-
-    override def characters(buff:Array[Char], offset:Int, len:Int):Unit = if(charsValid) valList.last.addChars(buff,offset,len)
-
-  }
+  import XmlInputArchive.{XMLParser,Value}
 
   private case object XmlIndex extends Index {
     override def done(): Boolean = {
@@ -59,7 +25,6 @@ class XmlInputArchive(in: InputStream) extends InputArchive {
 
     override def incr(): Unit = {}
   }
-
 
   private val valList = ArrayBuffer[Value]()
   private var vIdx = 0
@@ -145,6 +110,7 @@ class XmlInputArchive(in: InputStream) extends InputArchive {
     XmlIndex
   }
 
+
   override def endVector(tag: String): Unit = {}
 
   override def startMap(tag: String): Index = startVector(tag)
@@ -153,6 +119,42 @@ class XmlInputArchive(in: InputStream) extends InputArchive {
 }
 
 object XmlInputArchive {
+  private case class Value(t:String) {
+    private val typ = t
+    private val sb = new StringBuffer()
+
+    def addChars(buf:Array[Char], offset:Int, len:Int):Unit = sb.append(buf, offset, len)
+    def getValue:String = sb.toString
+    def getType:String = typ
+  }
+
+  private case class XMLParser(vlist:ArrayBuffer[Value]) extends DefaultHandler {
+    var valList:ArrayBuffer[Value] = vlist
+    private var charsValid = false
+
+    override def startDocument():Unit = {}
+    override def endDocument():Unit = {}
+    override def startElement(ns:String, sname:String, qname:String, attrs:Attributes):Unit = {
+      charsValid = false
+      qname match {
+        case "boolean" | "i4" | "int" | "string" | "double" | "ex:i1" | "ex:i8" | "ex:float" =>
+          charsValid = true
+          valList += Value(qname)
+        case "struct" | "array" =>
+          valList += Value(qname)
+      }
+    }
+    override def endElement(s:String, sname:String, qname:String):Unit = {
+      charsValid = false
+      qname match {
+        case "struct" | "array" => valList += Value("/"+qname)
+      }
+    }
+
+    override def characters(buff:Array[Char], offset:Int, len:Int):Unit = if(charsValid) valList.last.addChars(buff,offset,len)
+
+  }
+
   def getArchive(strm: InputStream): XmlInputArchive = new XmlInputArchive(strm)
 }
 
