@@ -10,7 +10,7 @@ class RecordReader(in:InputStream, format:String) {
 }
 
 object RecordReader {
-  type getArchive = (InputStream) => InputArchive
+  type getArchive = InputStream => InputArchive
   val archiveFactory: Map[String, getArchive] =
     Map(("binary", BinaryInputArchive.getArchive),
         ("csv", CsvInputArchive.getArchive),

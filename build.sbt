@@ -12,5 +12,6 @@ libraryDependencies ++= Seq(
   "org.apache.maven.wagon" % "wagon-http" % "3.0.0",
   "io.netty" % "netty-all" % "4.1.23.Final",
   "org.jline" % "jline" % "3.6.2",
-  "xerces" % "xercesImpl" % "2.11.0"
+  "xerces" % "xercesImpl" % "2.11.0",
+  "com.beachape" %% "enumeratum" % "1.5.13"
 )
