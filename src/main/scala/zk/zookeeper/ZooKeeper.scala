@@ -7,6 +7,7 @@ import zk.zookeeper.client.ZooKeeperSaslClient
 import org.slf4j.LoggerFactory
 import zk.zookeeper.client.{ConnectStringParser, HostProvider, StaticHostProvider, ZKClientConfig}
 import zk.zookeeper.Watcher.Event.{EventType, WatcherType}
+import zk.zookeeper.KeeperException.Code
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{HashMap => mHashMap, HashSet => mHashSet}
@@ -172,8 +173,8 @@ object ZooKeeper {
       if(!containsWatcher) throw new KeeperException.NoWatcherException(path)
     }
 
-    protected def removeWatches(stringToWatchers: ConcurrentHashMap[String, mHashSet[Watcher]], watcher: Watcher, str: String, bool: Boolean, i: Int, watchers: mHashSet[Watcher]):Boolean = {
-      if(!local && rc != Code.OK.intValue)
+    protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mHashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mHashSet[Watcher]):Boolean = {
+      if(!local && rc != Code.OK.value)
     }
   }
   def createDefaultHostProvider(connectString:String):HostProvider = {

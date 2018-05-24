@@ -12,3 +12,6 @@ This will make the generation of an AST possible.  Then we can move over to usin
 
 ## Enumeration used
 * https://github.com/lloydmeta/enumeratum
+
+## XML
+* http://scalaxb.org
