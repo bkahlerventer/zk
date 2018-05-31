@@ -13,5 +13,8 @@ libraryDependencies ++= Seq(
   "io.netty" % "netty-all" % "4.1.23.Final",
   "org.jline" % "jline" % "3.6.2",
   "xerces" % "xercesImpl" % "2.11.0",
-  "com.beachape" %% "enumeratum" % "1.5.13"
+  "com.beachape" %% "enumeratum" % "1.5.13",
+  "org.apache.commons" % "commons-configuration2" % "2.2",
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+
 )

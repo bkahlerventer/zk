@@ -15,3 +15,10 @@ This will make the generation of an AST possible.  Then we can move over to usin
 
 ## XML
 * http://scalaxb.org
+
+## Testing
+* ScalaCheck https://www.scalacheck.org
+
+## Exceptions: Try, Option or Either
+http://blog.xebia.com/try-option-or-either/
+

@@ -39,7 +39,7 @@ object KeeperException {
     /** System and server-side errors.
       * This is never thrown by the server, it shouldn't be used other than
       * to indicate a range. Specifically error codes greater than this
-      * value, but lesser than {@link #APIERROR}, are system errors.
+      * value, but lesser than APIERROR, are system errors.
       */
     case object SYSTEMERROR extends Code(-1, "SystemError")
     /** A runtime inconsistency was found */
@@ -67,8 +67,7 @@ object KeeperException {
     /** API errors.
       * This is never thrown by the server, it shouldn't be used other than
       * to indicate a range. Specifically error codes greater than this
-      * value are API errors (while values less than this indicate a
-      * {@link #SYSTEMERROR}).
+      * value are API errors (while values less than this indicate a SYSTEMERROR).
       */
     case object APIERROR extends Code(-100, "APIError")
     /** Node does not exist */
@@ -105,10 +104,39 @@ object KeeperException {
 
     val values = findValues
   }
+
+  case class APIErrorException(msg:Option[String]=None) extends KeeperException(Some(Code.APIERROR),None,msg)
+  case class AuthFailedException(msg:Option[String]=None) extends KeeperException(Some(Code.AUTHFAILED),None,msg)
+  case class BadArgumentsException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.BADARGUMENTS),p,msg)
+  case class BadVersionException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.BADVERSION), p, msg)
+  case class ConnectionLossException(msg:Option[String]=None) extends KeeperException(Some(Code.CONNECTIONLOSS),None,msg)
+  case class DataInconsistencyException(msg:Option[String]=None) extends KeeperException(Some(Code.DATAINCONSISTENCY),None,msg)
+  case class InvalidACLException(msg:Option[String]=None,p:Option[String]=None) extends KeeperException(Some(Code.INVALIDACL),p,msg)
+  case class InvalidCallbackException(msg:Option[String]=None) extends KeeperException(Some(Code.INVALIDCALLBACK),None,msg)
+  case class MarshallingErrorException(msg:Option[String]=None) extends KeeperException(Some(Code.MARSHALLINGERROR),None,msg)
+  case class NoAuthException(msg:Option[String]=None) extends KeeperException(Some(Code.NOAUTH),None,msg)
+  case class NewConfigNoQuorum(msg:Option[String]=None) extends KeeperException(Some(Code.NEWCONFIGNOQUORUM),None,msg)
+  case class ReconfigInProgress(msg:Option[String]=None) extends KeeperException(Some(Code.RECONFIGINPROGRESS),None,msg)
+  case class NoChildrenForEphemeralException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.NOCHILDRENFOREPHEMERALS),p,msg)
+  case class NodeExistsException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.NODEEXISTS),p,msg)
+  case class NoNodeException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.NONODE),p,msg)
+  case class NotEmptyException(msg:Option[String]=None, p:Option[String]=None) extends KeeperException(Some(Code.NOTEMPTY),p,msg)
+  case class OperationTimeoutException(msg:Option[String]=None) extends KeeperException(Some(Code.OPERATIONTIMEOUT),None,msg)
+  case class RuntimeInconsistencyException(msg:Option[String]=None) extends KeeperException(Some(Code.RUNTIMEINCONSISTENCY),None,msg)
+  case class SessionExpiredException(msg:Option[String]=None) extends KeeperException(Some(Code.SESSIONEXPIRED),None,msg)
+  case class UnknownSessionException(msg:Option[String]=None) extends KeeperException(Some(Code.UNKNOWNSESSION),None,msg)
+  case class SessionMovedException(msg:Option[String]=None) extends KeeperException(Some(Code.SESSIONMOVED),None,msg)
+  case class NotReadOnlyException(msg:Option[String]=None) extends KeeperException(Some(Code.NOTREADONLY),None,msg)
+  case class EphemeralOnLocalSessionException(msg:Option[String]=None) extends KeeperException(Some(Code.EPHEMERALONLOCALSESSION),None,msg)
+  case class SystemErrorException(msg:Option[String]=None) extends KeeperException(Some(Code.SYSTEMERROR),None,msg)
+  case class UnimplementedException(msg:Option[String]=None) extends KeeperException(Some(Code.UNIMPLEMENTED),None,msg)
+  case class NoWatcherException(msg:Option[String]=None,p:Option[String]=None) extends KeeperException(Some(Code.NOWATCHER),p,msg)
+  case class ReconfigDisabledException(msg:Option[String],p:Option[String]) extends KeeperException(Some(Code.RECONFIGDISABLED),p,msg)
+
 }
 
 
-abstract class KeeperException(c:Option[Code], p:Option[String]) {
+abstract class KeeperException(c:Option[Code], p:Option[String]=None, msg:Option[String]=None) extends Exception(msg.orNull) {
 
   import KeeperException.Code
 
@@ -127,14 +155,25 @@ abstract class KeeperException(c:Option[Code], p:Option[String]) {
     _code = Code.withValueOpt(c)
   }
 
-  def this(c: Code) = this(c, None)
+  //def this(c: Option[Code]) = this(c, None)
 
   def code: Option[Code] = _code
 
-  def getMessage: String = {
+  def path: Option[String] = _path
+
+  override def getMessage: String = {
     if (_path.isEmpty) s"KeeperErrorCode = ${_code.get.name}"
     else s"KeeperErrorCode = ${_code.get.name} for ${_path.get}"
   }
 
   def getResults:mutable.ListBuffer[OpResult] = if(results.isEmpty) mutable.ListBuffer[OpResult]() else null
+
+  def setMultiResults(r:mutable.ListBuffer[OpResult]):Unit = results = r
+
+  @Deprecated
+  def getCode: Int = _code.get.value
+
+  def getPath:String = _path.get
+
+
 }

@@ -10,7 +10,8 @@ import zk.zookeeper.Watcher.Event.{EventType, WatcherType}
 import zk.zookeeper.KeeperException.Code
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{HashMap => mHashMap, HashSet => mHashSet}
+import scala.collection.mutable
+
 
 // String,Int,Watcher,Boolean,HostProvider,Option[ZKClientConfig]
 class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
@@ -25,7 +26,7 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
 
   private val watchManager = defaultWatchManager
   private val clientConfig = conf.getOrElse(new ZKClientConfig)
-  private val connectStringParser = new ConnectStringParser
+  private val connectStringParser = new ConnectStringParser(connectString)
   watchManager.defaultWatcher = watcher
   protected val cnxn:ClientCnxn = new ClientCnxn(connectStringParser.getChrootPath(),
     aHostProvider, sessionTimeout, this, watchManager,
@@ -96,10 +97,10 @@ object ZooKeeper {
 
   // TODO - implement protocols to update variables in this case class
   case class ZKWatchManager(disableAutoWatchReset:Boolean) extends ClientWatchManager {
-    type WatchMap = mHashMap[String, mHashSet[Watcher]]
-    private var dataWatches = new ConcurrentHashMap[String, mHashSet[Watcher]]
-    private var existWatches = new ConcurrentHashMap[String, mHashSet[Watcher]]
-    private var childWatches = new ConcurrentHashMap[String, mHashSet[Watcher]]
+    type WatchMap = mutable.HashMap[String, mutable.HashSet[Watcher]]
+    private var dataWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
+    private var existWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
+    private var childWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
     // val disableAutoWatchReset - added by constructor above
 
     private var watchManager = ZKWatchManager(false)
@@ -107,17 +108,17 @@ object ZooKeeper {
     // modifier for watchManager
     def watchManager_=(zkwm:ZKWatchManager):Unit = watchManager = zkwm
 
-    private def addTo(from:mHashSet[Watcher], to:mHashSet[Watcher]):Unit = {
+    private def addTo(from:mutable.HashSet[Watcher], to:mutable.HashSet[Watcher]):Unit = {
       if(from != null) to ++= from
     }
 
-    def removeWatcher(clientPath:String, watcher:Watcher, watcherType:WatcherType, local:Boolean, rc:Int): Map[EventType, mHashSet[Watcher]] = {
+    def removeWatcher(clientPath:String, watcher:Watcher, watcherType:WatcherType, local:Boolean, rc:Int): Map[EventType, mutable.HashSet[Watcher]] = {
       // Validate the provided znode path contains the given watcher of watcherType
       containsWatcher(clientPath,watcher,watcherType)
-      val childWatchersToRem = mHashSet[Watcher]()
-      val removedWatchers = new ConcurrentHashMap[EventType,mHashSet[Watcher]]
+      val childWatchersToRem = mutable.HashSet[Watcher]()
+      val removedWatchers = new ConcurrentHashMap[EventType,mutable.HashSet[Watcher]]
       removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem)
-      val dataWatchersToRem = mHashSet[Watcher]()
+      val dataWatchersToRem = mutable.HashSet[Watcher]()
       removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem)
       var removedWatcher: Boolean = false
       var removedDataWatcher:Boolean = false
@@ -139,15 +140,15 @@ object ZooKeeper {
       removedWatchers.asScala.toMap
     }
 
-    private def contains(path:String, watcherObj:Watcher, pathVsWatchers:ConcurrentHashMap[String, mHashSet[Watcher]]): Boolean = {
+    private def contains(path:String, watcherObj:Watcher, pathVsWatchers:ConcurrentHashMap[String, mutable.HashSet[Watcher]]): Boolean = {
       var watcherExists:Boolean = true
-      var watchers: Option[Set[Watcher]] = None
+      var watchers: mutable.HashSet[Watcher] = null
 
       if(pathVsWatchers == null || pathVsWatchers.isEmpty) watcherExists = false
       else {
         watchers = pathVsWatchers.get(path)
         if(watchers.isEmpty) watcherExists = false
-        else if (watcherObj == null) watcherExists = watchers.isDefined
+        else if (watcherObj == null) watcherExists = watchers.nonEmpty
         else watcherExists = watchers.contains(watcherObj)
       }
       watcherExists
@@ -173,8 +174,20 @@ object ZooKeeper {
       if(!containsWatcher) throw new KeeperException.NoWatcherException(path)
     }
 
-    protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mHashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mHashSet[Watcher]):Boolean = {
-      if(!local && rc != Code.OK.value)
+    protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mutable.HashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mutable.HashSet[Watcher]):Boolean = {
+      if(!local && rc != Code.OK.value) throw KeeperException(Some(KeeperException.Code.withValue(rc)),Option(path))
+      var success = false
+      if(rc == Code.OK.value || (local && rc != Code.OK.value)) {
+        if(watcher == null) {
+          var pathWatchers = pathVsWatcher.remove(path)
+          if(pathWatchers != null) {
+            removedWatchers ++= pathWatchers
+            success = true
+          }
+        } else {
+
+        }
+      }
     }
   }
   def createDefaultHostProvider(connectString:String):HostProvider = {
