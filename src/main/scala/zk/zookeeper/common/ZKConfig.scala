@@ -6,54 +6,48 @@ package zk.zookeeper.common
 
 
 import scala.collection.JavaConverters._
-
 import java.io.File
 
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.configuration2._
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
+import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.slf4j.LoggerFactory
-
 import zk.zookeeper.Environment
+
+import scala.util.{Try,Success,Failure}
 
 
 
 class ZKConfig(configPath:Option[String]=None) {
   import ZKConfig._
 
-  //private val properties:mutable.HashMap[String, String] = mutable.HashMap[String, String]()
-  private val properties:Config = if(configPath.isDefined) ConfigFactory.load(configPath.get) else ConfigFactory.load()
+  val properties:Configuration = getFileConfigBuilder(configPath.get) match {
+    case Success(fcb) => fcb
+    case Failure(_) => new PropertiesConfiguration()
+  }
 
-  //init()
-
-  //if(configFile.isDefined) addConfiguration(configFile)
+  def getFileConfigBuilder(fileName:String):Try[Configuration] = {
+    val params: Parameters = new Parameters()
+    val builder = new FileBasedConfigurationBuilder[FileBasedConfiguration](classOf[PropertiesConfiguration])
+      .configure(params.properties()
+        .setFileName(configPath.get))
+    Try(builder.getConfiguration)
+  }
 
   def this(configFile:File) = this(Some(configFile.getAbsolutePath))
-
-  private def init():Unit = handleBackwardCompatibility()
-
-  // no need to parse properties from System Properties
-  protected def handleBackwardCompatibility():Unit = {}
 
   def getProperty(key:String):Option[String] = {
     val x = properties.getString(key)
     if(x == null) None else Option(x)
   }
 
-  def getOrElse(key:String, defaultValue:String) :String = properties.che
+  def getOrElse(key:String, defaultValue:String) :String = properties.getString(key,defaultValue)
 
-  def getProperty(key:String, defaultValue:String):String = properties.getOrElse(key,defaultValue)
+  def getProperty(key:String, defaultValue:String) :String = getOrElse(key,defaultValue)
 
   def getJaasConfKey:String = System.getProperty(Environment.JAAS_CONF_KEY)
 
-  def addConfiguration(maybeFile: Option[File]):Unit = {
-    LOG.info(s"Reading configuration from: ${configFile.get.getAbsolutePath}")
-
-    val cfg:Config = ConfigFactory.load(maybeFile.get.getAbsolutePath)
-
-    parseProperties(cfg)
-  }
-
-  // no need to parse properties, already processed
-  def parseProperties(config: Config):Unit = {}
 }
 
 object ZKConfig {

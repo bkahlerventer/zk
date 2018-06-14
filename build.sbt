@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   "xerces" % "xercesImpl" % "2.11.0",
   "com.beachape" %% "enumeratum" % "1.5.13",
   "org.apache.commons" % "commons-configuration2" % "2.2",
+  "com.jsuereth" %% "scala-arm" % "2.0",
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
 )

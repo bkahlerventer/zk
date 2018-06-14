@@ -1,10 +1,12 @@
 package zk.zookeeper.client
 
+import java.io.{BufferedReader, InputStreamReader}
 import java.net.{InetAddress, InetSocketAddress, Socket}
 
 import com.typesafe.scalalogging.Logger
-import javax.net.ssl.{SSLContext,SSLSocket,SSLSocketFactory}
+import javax.net.ssl.{SSLContext, SSLSocket, SSLSocketFactory}
 import org.slf4j.LoggerFactory
+import zk.zookeeper.common.X509Util
 
 class FourLetterWordMain {
 
@@ -26,7 +28,15 @@ object FourLetterWordMain {
     if(secure) {
       LOG.info("using secure socket")
       val sslContext = X509Util.createSSLContext
-    }
+      val socketFactory = sslContext.get.getSocketFactory
+      val sslSock:SSLSocket = socketFactory.createSocket().asInstanceOf[SSLSocket]
+      sslSock.connect(hostAddress,timeout)
+      sslSock.startHandshake()
+      sock=sslSock
+    } else sock.connect(hostAddress, timeout)
+    sock.setSoTimeout(timeout)
+    var reader:BufferedReader = new BufferedReader(new InputStreamReader(sock.getInputStream))
+
   }
 
   def main(args: Array[String]): Unit = args.length match {
