@@ -1,5 +1,5 @@
 package zk.zookeeper.client
 
-class StaticHostProvider {
+class StaticHostProvider extends HostProvider {
 
 }

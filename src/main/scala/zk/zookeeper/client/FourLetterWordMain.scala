@@ -1,12 +1,14 @@
 package zk.zookeeper.client
 
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, IOException, InputStreamReader}
 import java.net.{InetAddress, InetSocketAddress, Socket}
 
 import com.typesafe.scalalogging.Logger
-import javax.net.ssl.{SSLContext, SSLSocket, SSLSocketFactory}
+import javax.net.ssl.SSLSocket
 import org.slf4j.LoggerFactory
 import zk.zookeeper.common.X509Util
+
+import scala.util.control.NonFatal
 
 class FourLetterWordMain {
 
@@ -35,8 +37,21 @@ object FourLetterWordMain {
       sock=sslSock
     } else sock.connect(hostAddress, timeout)
     sock.setSoTimeout(timeout)
-    var reader:BufferedReader = new BufferedReader(new InputStreamReader(sock.getInputStream))
-
+    val reader: BufferedReader = new BufferedReader(new InputStreamReader(sock.getInputStream))
+    try {
+      val outstream = sock.getOutputStream
+      outstream.write(cmd.getBytes)
+      outstream.flush()
+      if(!secure) sock.shutdownOutput()
+      val sb = new StringBuilder
+      for(line <- reader.readLine()) sb.append(s"$line\n")
+      sb.toString()
+    } catch {
+      case NonFatal(e) => throw new IOException("Exception while executing four letter word: " + cmd, e)
+    } finally {
+      sock.close()
+      reader.close()
+    }
   }
 
   def main(args: Array[String]): Unit = args.length match {
