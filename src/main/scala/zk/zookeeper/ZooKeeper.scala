@@ -6,21 +6,26 @@ import com.typesafe.scalalogging.Logger
 import zk.zookeeper.client.ZooKeeperSaslClient
 import org.slf4j.LoggerFactory
 import zk.zookeeper.client.{ConnectStringParser, HostProvider, StaticHostProvider, ZKClientConfig}
-import zk.zookeeper.Watcher.Event.{EventType, WatcherType}
+import zk.zookeeper.Watcher.Event.{EventType, KeeperState, WatcherType}
 import zk.zookeeper.KeeperException.Code
+import zk.zookeeper.data.{ACL, Stat}
+import zk.zookeeper.proto.RequestHeader
+import zk.zookeeper.AsyncCallback
+import zk.jute.Record
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.HashSet
 import scala.collection.mutable
 
 
 // String,Int,Watcher,Boolean,HostProvider,Option[ZKClientConfig]
 class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
                 canBeReadOnly:Boolean, aHostProvider:HostProvider, conf:Option[ZKClientConfig]) extends AutoCloseable {
-  import ZooKeeper.{createDefaultHostProvider,LOG,ZKWatchManager}
+  import ZooKeeper._
 
-  @Deprecated
+  @deprecated("Use ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET instead.")
   val ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket"
-  @Deprecated
+  @deprecated("Use ZKClientConfig.SECURE_CLIENT instead.")
   val SECURE_CLIENT = "zookeeper.client.secure"
 
 
@@ -32,7 +37,7 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
     aHostProvider, sessionTimeout, this, watchManager,
     getClientCnxnSocket(), canBeReadOnly)
 
-  protected var defaultWatcher:Watcher
+
 
   def updateServerList(connectionString:String):Unit = ???
 
@@ -45,8 +50,6 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
   def getExistWatches: List[String] = ???
 
   def getChildWatches: List[String] = ???
-
-
 
 
   // 1. String, Int, Watcher, Boolean, HostProvider
@@ -86,111 +89,270 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
     this(connectionString,sessionTimeout,watcher,sessionId,sessionPasswd,false)
   }
 
-  protected def defaultWatchManager:ZKWatchManager = ???
+  def getTestable:Testable = ???
+
+  def getSessionId:Long = ???
+
+  def getSessionPasswd:Vector[Byte] = ???
+
+  def getSessionTimeout:Int = ???
+
+  def addAuthInfo(scheme:String, auth:Vector[Byte]):Unit = ???
+
+  def register(watcher:Watcher):Unit = ???
 
   override def close(): Unit = ???
+
+  def close(waitForShutdownTimeoutMs:Int):Boolean = ???
+
+  def prependChroot(clientPath:String):String = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode):String = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode, stat:Stat):String = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode, stat:Stat, ttl:Long):String = ???
+
+  def setCreateHeader(createMode:CreateMode, h:RequestHeader):Unit = ???
+
+  def makeCreateRecord(createMode:CreateMode, serverPath:String, data:Vector[Byte], acl:List[ACL], ttl:Long):Record = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode, cb:StringCallback, ctx:Object):String = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode, cb:Create2Callback, ctx:Object):String = ???
+
+  def create(path:String, data:Vector[Byte], acl:List[ACL], createMode:CreateMode, cb:Create2Callback, ctx:Object, ttl:Long):String = ???
+
+  def delete(path:String, version:Int):Unit = ???
+
+  def multi(ops:Iterable[Op]):List[OpResult] = ???
+
+  def multi(ops:Iterable[Op], cb:MultiCallback, ctx:Object):Unit = ???
+
+  def validatePath(ops:Iterable[Op]):List[OpResult] = ???
+
+  def generateMultiTransaction(ops:Iterable[Op]):MultiTransactionRecord = ???
+
+  def withRootPrefix(op:Op):Op = ???
+
+  def multiInternal(request:MultiTransactionRecord, cb:MultiCallback, ctx:Object):Unit = ???
+
+  def multiInternal(request:MultiTransactionRecord):List[OpResult]
+
+  def transaction:Transaction = ???
+
+  def delete(path:String, version:Int, cb:VoidCallback, ctx:Object):Unit = ???
+
+  def exists(path:String, watcher:Watcher):Stat = ???
+
+  def exists(path:String, watch:Boolean):Stat = ???
+
+  def exists(path:String, watcher:Watcher, cb:StatCallback, ctx:Object):Stat = ???
+
+  def getData(path:String, watcher:Watcher, stat:Stat):Vector[Byte] = ???
+
+  def getData(path:String, watch:Boolean, stat:Stat):Vector[Byte] = ???
+
+  def getData(path:String, watcher:Watcher, cb:DataCallback, ctx:Object):Unit = ???
+
+  def getData(path:String, watch:Boolean, cb:DataCallback, ctx:Object):Unit = ???
+
+  def getConfig(watcher:Watcher, stat:Stat):Vector[Byte] = ???
+
+  def getConfig(watcher: Watcher, cb:DataCallback, ctx:Object):Unit = ???
+
+  def getConfig(watch:Boolean, stat:Stat):Vector[Byte] = ???
+
+  def getConfig(watch:Boolean, cb:DataCallback, ctx:Object):Unit = ???
+
+  def setData(path:String, data:Vector[Byte], version:Int):Stat = ???
+
+  def setData(path:String, data:Vector[Byte], version:Int, cb:StatCallback, ctx:Object):Unit = ???
+
+  def getACL(path:String, stat:Stat):List[ACL] = ???
+
+  def getACL(path:String, stat:Stat, cb:ACLCallback, ctx:Object):Unit = ???
+
+  def setACL(path:String, acl:List[ACL], version:Int):Stat = ???
+
+  def setACL(path:String, acl:List[ACL], version:Int, cb:StatCallback, ctx:Object):Unit = ???
+
+  def getChildren(path:String, watcher:Watcher):List[String] = ???
+
+  def getChildren(path:String, watch:Boolean):List[String] = ???
+
+  def getChildren(path:String, watcher:Watcher, cb:ChildrenCallback, ctx:Object):Unit = ???
+
+  def getChildren(path:String, watch:Boolean, cb:ChildrenCallback, ctx:Object):Unit = ???
+
+  def getChildren(path:String, watcher:Watcher, stat:Stat):List[String] = ???
+
+  def getChildren(path:String, watch:Boolean, stat:Stat):List[String] = ???
+
+  def getChildren(path:String, watcher:Watcher, stat:Stat, cb:ChildrenCallback, ctx:Object):List[String] = ???
+
+  def getChildren(path:String, watch:Boolean, stat:Stat, cb:ChildrenCallback, ctx:Object):List[String] = ???
+
+  def sync(path:String, cb:VoidCallback, ctx:Object):Unit = ???
+
+  def removeWatches(path:String, watcher: Watcher, watcherType: WatcherType, local:Boolean):Unit = ???
+
+  def removeWatches(path:String, watcher: Watcher, watcherType: WatcherType, local:Boolean, cb:VoidCallback, ctx:Object):Unit = ???
+
+  def removeAllWatches(path:String, watcherType: WatcherType, local:Boolean):Unit = ???
+
+  def removeAllWatches(path:String, watcherType: WatcherType, local:Boolean, cb:VoidCallback, ctx:Object):Unit = ???
+
+  def validateWatcher(watcher: Watcher):Unit = ???
+
+  def removeWatches(opCode:Int, path:String, watcher:Watcher, watcherType: WatcherType, local:Boolean):Unit = ???
+
+  def removeWatches(opCode:Int, path:String, watcher:Watcher, watcherType: WatcherType, local:Boolean, cb:VoidCallback, ctx:Object):Unit = ???
+
+  def getRemoveWatchesRequest(opCode:Int, watcherType: WatcherType, path:String):Record = ???
+
+  def getState:States = ???  //-----
+
+  def materialize(state:KeeperState,etype:EventType,path:String):Set[Watcher] = ???
+
+
+
+  class ExistWatchRegistration(watcher:Watcher, clientPath:String) extends WatchRegistration(watcher, clientPath) {
+    override protected def getWatches(rc: Int): Map[String, Set[Watcher]] = ???
+
+    override protected def shouldAddWatch(rc:Int):Boolean = ???
+
+  }
+
 }
 
 object ZooKeeper {
   val LOG = Logger(LoggerFactory.getLogger(ZooKeeper.getClass))
   Environment.logEnv("Client environment:", LOG)
 
-  // TODO - implement protocols to update variables in this case class
-  case class ZKWatchManager(disableAutoWatchReset:Boolean) extends ClientWatchManager {
-    type WatchMap = mutable.HashMap[String, mutable.HashSet[Watcher]]
-    private var dataWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-    private var existWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-    private var childWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-    // val disableAutoWatchReset - added by constructor above
+  protected def defaultWatchManager:ZKWatchManager = ZKWatchManager(getClientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET))
 
-    private var watchManager = ZKWatchManager(false)
 
-    // modifier for watchManager
-    def watchManager_=(zkwm:ZKWatchManager):Unit = watchManager = zkwm
-
-    private def addTo(from:mutable.HashSet[Watcher], to:mutable.HashSet[Watcher]):Unit = {
-      if(from != null) to ++= from
-    }
-
-    def removeWatcher(clientPath:String, watcher:Watcher, watcherType:WatcherType, local:Boolean, rc:Int): Map[EventType, mutable.HashSet[Watcher]] = {
-      // Validate the provided znode path contains the given watcher of watcherType
-      containsWatcher(clientPath,watcher,watcherType)
-      val childWatchersToRem = mutable.HashSet[Watcher]()
-      val removedWatchers = new ConcurrentHashMap[EventType,mutable.HashSet[Watcher]]
-      removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem)
-      val dataWatchersToRem = mutable.HashSet[Watcher]()
-      removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem)
-      var removedWatcher: Boolean = false
-      var removedDataWatcher:Boolean = false
-      watcherType match {
-        case WatcherType.Children =>
-          removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
-        case WatcherType.Data =>
-          removedWatcher = removeWatches(dataWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-          removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-          removedWatcher |= removedDataWatcher
-        case WatcherType.Any =>
-          removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
-          removedDataWatcher = removeWatches(dataWatches,watcher,clientPath,local,dataWatchersToRem)
-          removedWatcher |= removedDataWatcher
-          removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-          removedWatcher |= removedDataWatcher
-      }
-      if(!removedWatcher) throw new KeeperException.NoWatcherException(clientPath)
-      removedWatchers.asScala.toMap
-    }
-
-    private def contains(path:String, watcherObj:Watcher, pathVsWatchers:ConcurrentHashMap[String, mutable.HashSet[Watcher]]): Boolean = {
-      var watcherExists:Boolean = true
-      var watchers: mutable.HashSet[Watcher] = null
-
-      if(pathVsWatchers == null || pathVsWatchers.isEmpty) watcherExists = false
-      else {
-        watchers = pathVsWatchers.get(path)
-        if(watchers.isEmpty) watcherExists = false
-        else if (watcherObj == null) watcherExists = watchers.nonEmpty
-        else watcherExists = watchers.contains(watcherObj)
-      }
-      watcherExists
-    }
-
-    def containsWatcher(path: String, watcher: Watcher, watcherType: Watcher.Event.WatcherType):Unit = {
-      var containsWatcher = false
-      var containsTemp = false
-      watcherType match {
-        case WatcherType.Children =>
-          containsWatcher = contains(path, watcher,childWatches)
-        case WatcherType.Data =>
-          containsWatcher = contains(path, watcher,dataWatches)
-          containsTemp = contains(path,watcher,existWatches)
-          containsWatcher |= containsTemp
-        case WatcherType.Any =>
-          containsWatcher = contains(path,watcher,childWatches)
-          containsTemp = contains(path,watcher,dataWatches)
-          containsWatcher |= containsTemp
-          containsTemp = contains(path,watcher,existWatches)
-          containsWatcher |= containsTemp
-      }
-      if(!containsWatcher) throw new KeeperException.NoWatcherException(path)
-    }
-
-    protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mutable.HashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mutable.HashSet[Watcher]):Boolean = {
-      if(!local && rc != Code.OK.value) throw KeeperException(Some(KeeperException.Code.withValue(rc)),Option(path))
-      var success = false
-      if(rc == Code.OK.value || (local && rc != Code.OK.value)) {
-        if(watcher == null) {
-          var pathWatchers = pathVsWatcher.remove(path)
-          if(pathWatchers != null) {
-            removedWatchers ++= pathWatchers
-            success = true
-          }
-        } else {
-
-        }
-      }
-    }
-  }
   def createDefaultHostProvider(connectString:String):HostProvider = {
-    new StaticHostProvider(new ConnectStringParser(connectString).getServerAddresses)
+    new StaticHostProvider(new ConnectStringParser(connectString).getServerAddresses.toVector)
   }
+}
+
+abstract class WatchRegistration(watcher:Watcher, clientPath:String) {
+  protected def getWatches(rc:Int):Map[String,Set[Watcher]]
+
+  def register(rc:Int):Unit = {
+    if(shouldAddWatch(rc)) {
+      val watchMap: Map[String, Set[Watcher]] = getWatches(rc)
+      synchronized(watchMap) {
+        var watcherSet:Set[Watcher] = new HashSet[Watcher]()
+        watchMap.get(clientPath) match {
+            // found no watch for the path, create one
+          case None => watchMap(clientPath) = new HashSet[Watcher]()
+          case Some(w) => watchMap(clientPath) = w
+        }
+        watcherSet += watcher  // add watcher to Set of watcherSet
+      }
+    }
+  }
+  protected def shouldAddWatch(rc: Int):Boolean = rc == 0
+}
+
+// TODO - implement protocols to update variables in this case class
+case class ZKWatchManager(disableAutoWatchReset:Boolean) extends ClientWatchManager {
+  type WatchMap = mutable.HashMap[String, mutable.HashSet[Watcher]]
+  private var dataWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
+  private var existWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
+  private var childWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
+  // val disableAutoWatchReset - added by constructor above
+
+  private var watchManager = ZKWatchManager(false)
+
+  // modifier for watchManager
+  def watchManager_=(zkwm:ZKWatchManager):Unit = watchManager = zkwm
+
+  private def addTo(from:mutable.HashSet[Watcher], to:mutable.HashSet[Watcher]):Unit = {
+    if(from != null) to ++= from
+  }
+
+  def removeWatcher(clientPath:String, watcher:Watcher, watcherType:WatcherType, local:Boolean, rc:Int): Map[EventType, mutable.HashSet[Watcher]] = {
+    // Validate the provided znode path contains the given watcher of watcherType
+    containsWatcher(clientPath,watcher,watcherType)
+    val childWatchersToRem = mutable.HashSet[Watcher]()
+    val removedWatchers = new ConcurrentHashMap[EventType,mutable.HashSet[Watcher]]
+    removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem)
+    val dataWatchersToRem = mutable.HashSet[Watcher]()
+    removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem)
+    var removedWatcher: Boolean = false
+    var removedDataWatcher:Boolean = false
+    watcherType match {
+      case WatcherType.Children =>
+        removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
+      case WatcherType.Data =>
+        removedWatcher = removeWatches(dataWatches,watcher,clientPath,local,rc,dataWatchersToRem)
+        removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
+        removedWatcher |= removedDataWatcher
+      case WatcherType.Any =>
+        removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
+        removedDataWatcher = removeWatches(dataWatches,watcher,clientPath,local,dataWatchersToRem)
+        removedWatcher |= removedDataWatcher
+        removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
+        removedWatcher |= removedDataWatcher
+    }
+    if(!removedWatcher) throw NoWatcherException(clientPath)
+    removedWatchers.asScala.toMap
+  }
+
+  private def contains(path:String, watcherObj:Watcher, pathVsWatchers:ConcurrentHashMap[String, mutable.HashSet[Watcher]]): Boolean = {
+    var watcherExists:Boolean = true
+    var watchers: mutable.HashSet[Watcher] = null
+
+    if(pathVsWatchers == null || pathVsWatchers.isEmpty) watcherExists = false
+    else {
+      watchers = pathVsWatchers.get(path)
+      if(watchers.isEmpty) watcherExists = false
+      else if (watcherObj == null) watcherExists = watchers.nonEmpty
+      else watcherExists = watchers.contains(watcherObj)
+    }
+    watcherExists
+  }
+
+  def containsWatcher(path: String, watcher: Watcher, watcherType: Watcher.Event.WatcherType):Unit = {
+    var containsWatcher = false
+    var containsTemp = false
+    watcherType match {
+      case WatcherType.Children =>
+        containsWatcher = contains(path, watcher,childWatches)
+      case WatcherType.Data =>
+        containsWatcher = contains(path, watcher,dataWatches)
+        containsTemp = contains(path,watcher,existWatches)
+        containsWatcher |= containsTemp
+      case WatcherType.Any =>
+        containsWatcher = contains(path,watcher,childWatches)
+        containsTemp = contains(path,watcher,dataWatches)
+        containsWatcher |= containsTemp
+        containsTemp = contains(path,watcher,existWatches)
+        containsWatcher |= containsTemp
+    }
+    if(!containsWatcher) throw NoWatcherException(path)
+  }
+
+  protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mutable.HashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mutable.HashSet[Watcher]):Boolean = {
+    if(!local && rc != Code.OK.value) throw KeeperException(Some(KeeperException.Code.withValue(rc)),Option(path))
+    var success = false
+    if(rc == Code.OK.value || (local && rc != Code.OK.value)) {
+      if(watcher == null) {
+        var pathWatchers = pathVsWatcher.remove(path)
+        if(pathWatchers != null) {
+          removedWatchers ++= pathWatchers
+          success = true
+        }
+      } else {
+
+      }
+    }
+  }
+}
+object ZKWatchManager {
+   def defaultWatcher:Watcher = ???
 }

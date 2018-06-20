@@ -45,3 +45,13 @@ https://github.com/apache/camel
 ## Configuration
 https://commons.apache.org/proper/commons-configuration/index.html
 
+## Cluster protocol
+Need to use more optimal cluster protocol for LAN/WAN such as JGroups
+
+## Storage mechanism
+Need to use more optimal storage mechanism such as Apache Lucene, or external sources like Cassandra, etcd, etc.
+
+## Zookeeper Protocol
+http://www.arinkverma.in/2013/05/understanding-zookeeper-protocols.html
+https://github.com/python-zk/kazoo/blob/master/kazoo/protocol/serialization.py
+
