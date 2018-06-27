@@ -1,10 +1,21 @@
 package zk.zookeeper.data
 
-  case class Stat(czxid:Long, mzxid:Long, ctime:Long, mtime:Long, version:Int, cversion:Int, aversion:Int, ephemeralOwner:Long, dataLength:Int, numChildren:Int, pzxid:Long) extends Jute {
-    override def canEqual(that: Any): Boolean = that.isInstanceOf[Stat]
-    override def equals(that: scala.Any): Boolean = that match {
-      case that: Stat => that.canEqual(this) && this.hashCode == that.hashCode
-      case _ => false
-    }
-    override def hashCode(): Int = 35  + mzxid.toInt + czxid.toInt + ctime.toInt
-  }
+import java.io.{DataInput, DataOutput}
+
+import zk.jute.{InputArchive, OutputArchive, Record}
+import zk.zookeeper.Jute
+
+case class Stat(czxid:Long, mzxid:Long, ctime:Long, mtime:Long, version:Int, cversion:Int, aversion:Int, ephemeralOwner:Long, dataLength:Int, numChildren:Int, pzxid:Long) extends Jute with Record {
+
+  override def write(out: DataOutput): Unit = ???
+
+  override def readFields(in: DataInput): Unit = ???
+
+  override def compareTo(that: Any): Int = ???
+
+  override def signature: String = ???
+
+  override def serialize(archive: OutputArchive, tag: String): Unit = ???
+
+  override def deserialize(archive: InputArchive, tag: String): Unit = ???
+}

@@ -5,8 +5,6 @@ import java.io.{DataInput, DataOutput}
 import zk.jute.{InputArchive, OutputArchive, Record}
 import zk.zookeeper.Jute
 
-
-
 case class ACL(perms:Int, id:Id) extends Jute with Record {
 
   override def serialize(archive: OutputArchive, tag: String): Unit = ???
