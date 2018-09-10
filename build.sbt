@@ -16,6 +16,8 @@ libraryDependencies ++= Seq(
   "com.beachape" %% "enumeratum" % "1.5.13",
   "com.typesafe" % "config" % "1.3.2",
   "com.jsuereth" %% "scala-arm" % "2.0",
+  "org.apache.avro" % "avro" % "1.8.2",
+  "com.opencsv" % "opencsv" % "4.2",
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
 )

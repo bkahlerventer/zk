@@ -1,7 +1,9 @@
-package zk.jute
+package zk.io
 
 import java.io._
 import java.lang.reflect.InvocationTargetException
+
+import zk.jute.XmlOutputArchive
 
  /*
   * Front-end for serializers. Also serves as a factory for serializers.

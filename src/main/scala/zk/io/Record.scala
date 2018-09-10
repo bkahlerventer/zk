@@ -1,4 +1,4 @@
-package zk.jute
+package zk.io
 
 /**
   * Interface that is implemented by generated classes.

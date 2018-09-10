@@ -5,9 +5,7 @@ import enumeratum.values.{IntEnum, IntEnumEntry}
 import scala.util._
 
 
-sealed abstract class CreateMode(val value:Int, val ephemeral:Boolean, val sequential:Boolean, val isContainer:Boolean, val isTTL:Boolean) extends IntEnumEntry {
-
-}
+sealed abstract class CreateMode(val value:Int, val ephemeral:Boolean, val sequential:Boolean, val isContainer:Boolean, val isTTL:Boolean) extends IntEnumEntry
 
 case object CreateMode extends IntEnum[CreateMode] {
   case object PERSISTENT extends CreateMode(0,false,false, false, false)

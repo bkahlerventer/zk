@@ -1,4 +1,4 @@
-package zk.jute
+package zk.io
 
 /**
   * Interface all the serializers have to implement
@@ -13,8 +13,8 @@ trait OutputArchive {
   def writeString(s:String, tag:String):Unit
   def writeBuffer(buf:Array[Byte], tag:String):Unit
   def writeRecord(r:Record, tag:String):Unit
-  def startRecord(r:Record, tag:String):Unit
-  def endRecord(r:Record, tag:String):Unit
+  def startRecord(r:Record, tag:String):Boolean
+  def endRecord(r:Record, tag:String):Boolean
   def startVector(v:Vector[_], tag:String):Unit
   def endVector(v:Vector[_], tag:String):Unit
   def startMap(m:Map[_,_], tag:String):Unit

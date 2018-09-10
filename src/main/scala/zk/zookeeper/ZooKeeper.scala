@@ -18,16 +18,61 @@ import scala.collection.immutable.HashSet
 import scala.collection.mutable
 
 
-// String,Int,Watcher,Boolean,HostProvider,Option[ZKClientConfig]
-class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
+
+// P. String,Int,Watcher,Boolean,HostProvider,Option[ZKClientConfig]
+/**
+  * Combination of the Zookeeper 9 Constructors into a Primary Constructor, and reworking the other constructors to only call the primary
+  *
+  * Primary
+  *  0. (String,Int,Watcher,Option[Long],Option[Array[Byte] ],Boolean,HostProvider,Option[ZClientConfig])(8P)
+  * ZooKeeper(connectString:String,sessionTimeout:Int,watcher:Watcher,sessionId:Option[Long],sessionPasswd:Option[Array[Byte] ],canBeReadOnly:Boolean,aHostProvider:HostProvider,conf:Option[ZKClientConfig])
+  *
+  *  1. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher)(3)
+  *  this(connectString, sessionTimeout, watcher, None, None, false, createDefaultHostProvider(connectString), None)(8P)
+  *  2. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, ZKClientConfig conf)(4)
+  *  this(connectString, sessionTimeout, watcher, None, None, false, createDefaultHostProvider(connectString), conf)(8P)
+  *  3. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, HostProvider aHostProvider)(5)
+  *  this(connectString, sessionTimeout, watcher, None, None, canBeReadOnly, aHostProvider, None)(8P)
+  *  4. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, HostProvider aHostProvider, ZKClientConfig conf)(6)
+  *  this(connectString, sessionTimeout, watcher, None, None, canBeReadOnly, aHostProvider, conf)(8P)
+  * TODO port to primary constructor - ( Creates connection and starts it ) L863
+  * TODO createConnection(connectStringParser.getChrootPath(), hostProvider, sessionTimeout, this, watchManager, getClientCnxnSocket(), canBeReadOnly);
+  *  5. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly)(4)
+  * this(connectString, sessionTimeout, watcher, canBeReadOnly, createDefaultHostProvider(connectString))(5)
+  *  6. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, ZKClientConfig conf)(5)
+  * this(connectString, sessionTimeout, watcher, canBeReadOnly, createDefaultHostProvider(connectString), conf)(6)
+  *  7. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd)(5P)
+  * this(connectString, sessionTimeout, watcher, sessionId, sessionPasswd, false)(6P)
+  *  8. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly, HostProvider aHostProvider)(7P)
+  * TODO port to Primary - ( Zookeeper Client Object ) L1135 - Final Primary
+  * TODO ClientCnxn(connectStringParser.getChrootPath(), hostProvider, sessionTimeout, this, watchManager, getClientCnxnSocket(), sessionId, sessionPasswd, canBeReadOnly);
+  *  9. public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly)(6P)
+  * this(connectString, sessionTimeout, watcher, sessionId, sessionPasswd, canBeReadOnly, createDefaultHostProvider(connectString))(7P)
+  *
+  * TODO - merge ClientCnxn() with createConnection()
+  *
+  * @param connectString
+  * @param sessionTimeout
+  * @param watcher
+  * @param sessionId
+  * @param sessionPasswd
+  * @param canBeReadOnly
+  * @param aHostProvider
+  * @param conf
+  */
+class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher, sessionId:Option[Long], sessionPasswd: Option[Array[Byte]],
                 canBeReadOnly:Boolean, aHostProvider:HostProvider, conf:Option[ZKClientConfig]) extends AutoCloseable {
   import ZooKeeper._
 
+  LOG.info(s"Initiating client connection, connectstring=$connectString sessionTimeout=$sessionTimeout watcher=$watcher")
+
   @deprecated("Use ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET instead.")
   val ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket"
+
   @deprecated("Use ZKClientConfig.SECURE_CLIENT instead.")
   val SECURE_CLIENT = "zookeeper.client.secure"
 
+  protected def defaultWatchManager:ZKWatchManager = ZKWatchManager(getClientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET))
 
   private val watchManager = defaultWatchManager
   private val clientConfig = conf.getOrElse(new ZKClientConfig)
@@ -37,6 +82,7 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
     aHostProvider, sessionTimeout, this, watchManager,
     getClientCnxnSocket(), canBeReadOnly)
 
+  cnxn.start()
 
 
   def updateServerList(connectionString:String):Unit = ???
@@ -52,33 +98,45 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
   def getChildWatches: List[String] = ???
 
 
+  // (String, Int, Watcher, Option[Long, Option[Array[Byte]], Boolean, HostProvider, Option[ZKClientConfig])
+  def this(connectString:String, sessionTimeout:Int, watcher:Watcher, sessionPasswd: Option[Array[Byte]], canBeReadOnly:Boolean, aHostProvider:HostProvider, conf:Option[ZKClientConfig]) = {
+    this (connectString, sessionTimeout, watcher, sessionId, sessionPasswd, canBeReadOnly, aHostProvider, conf)
+  }
+  // (String, Int, Watcher, Option[Array[Byte]], Boolean, HostProvider, Option[ZKClientConfig])
+  def this(connectString:String, sessionTimeout:Int, watcher:Watcher, canBeReadOnly:Boolean, aHostProvider:HostProvider, conf:Option[ZKClientConfig]) = {
+    this(connectString, sessionTimeout, watcher, None, canBeReadOnly, aHostProvider, conf)
+  }
+
   // 1. String, Int, Watcher, Boolean, HostProvider
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher, canBeReadOnly:Boolean, aHostProvider:HostProvider) = {
-    // 0. String,Int,Watcher,Boolean,HostProvider,*
-    this(connectString,sessionTimeout,watcher,canBeReadOnly,aHostProvider,None)
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,canBeReadOnly,aHostProvider,None)
   }
   // 2. String,Int,Watcher,Boolean
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher, canBeReadOnly:Boolean) = {
-    // 1. String,Int,Watcher,Boolean,HostProvider
-    this(connectString,sessionTimeout,watcher,canBeReadOnly,createDefaultHostProvider(connectString))
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,canBeReadOnly,createDefaultHostProvider(connectString),None)
   }
   // 3. String,Int,Watcher,Boolean,ZkClientConfig
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher, canBeReadOnly:Boolean, conf:Option[ZKClientConfig]) = {
-    // String,Int,Watcher,Boolean,HostProvider,ZKClientConf
-    this(connectString,sessionTimeout,watcher,canBeReadOnly,createDefaultHostProvider(connectString), conf)
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,canBeReadOnly,createDefaultHostProvider(connectString), conf)
   }
   // 4. String,Int,Watcher
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher) = {
-    // String,Int,Watcher,Boolean
-    this(connectString,sessionTimeout,watcher,false)
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,false,createDefaultHostProvider(connectString),None)
   }
   // 5. String,Int,Watcher,ZKClientConfig
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher, conf:Option[ZKClientConfig]) = {
-    // String,Int,Watcher,Boolean,ZKClientConfig
-    this(connectString,sessionTimeout,watcher,false,conf)
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,false,createDefaultHostProvider(connectString),conf)
   }
   // 6. String,Int,Watcher,Long,Array[Byte],Boolean,HostProvider
-  def this(connectString:String, sessionTimeout:Int, watcher:Watcher, sessionId:Long, sessionPasswd:Array[Byte], canBeReadOnly:Boolean, aHostProvider:HostProvider) = ???
+  def this(connectString:String, sessionTimeout:Int, watcher:Watcher, sessionId:Long, sessionPasswd:Option[Array[Byte]], canBeReadOnly:Boolean, aHostProvider:HostProvider) = {
+    // P. String,Int,Watcher,Option[Array[Byte]],Boolean,HostProvider,Option[ZKClientConfig]
+    this(connectString,sessionTimeout,watcher,None,false,createDefaultHostProvider(connectString),None)
+  }
   // 7. String,Int,Watcher,Long,Array[Byte],Boolean
   def this(connectString:String, sessionTimeout:Int, watcher:Watcher, sessionId:Long, sessionPasswd:Array[Byte], canBeReadOnly:Boolean) = {
     this(connectString,sessionTimeout,watcher,sessionId,sessionPasswd,canBeReadOnly,createDefaultHostProvider(connectString))
@@ -227,10 +285,15 @@ class ZooKeeper(connectString:String, sessionTimeout:Int, watcher:Watcher,
 }
 
 object ZooKeeper {
-  val LOG = Logger(LoggerFactory.getLogger(ZooKeeper.getClass))
+  val LOG = Logger(classOf[ZooKeeper])
   Environment.logEnv("Client environment:", LOG)
 
-  protected def defaultWatchManager:ZKWatchManager = ZKWatchManager(getClientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET))
+  @Deprecated
+  val ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket"
+
+  @Deprecated
+  val SECURE_CLIENT = "zookeeper.client.secure"
+
 
 
   def createDefaultHostProvider(connectString:String):HostProvider = {
@@ -258,101 +321,3 @@ abstract class WatchRegistration(watcher:Watcher, clientPath:String) {
   protected def shouldAddWatch(rc: Int):Boolean = rc == 0
 }
 
-// TODO - implement protocols to update variables in this case class
-case class ZKWatchManager(disableAutoWatchReset:Boolean) extends ClientWatchManager {
-  type WatchMap = mutable.HashMap[String, mutable.HashSet[Watcher]]
-  private var dataWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-  private var existWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-  private var childWatches = new ConcurrentHashMap[String, mutable.HashSet[Watcher]]
-  // val disableAutoWatchReset - added by constructor above
-
-  private var watchManager = ZKWatchManager(false)
-
-  // modifier for watchManager
-  def watchManager_=(zkwm:ZKWatchManager):Unit = watchManager = zkwm
-
-  private def addTo(from:mutable.HashSet[Watcher], to:mutable.HashSet[Watcher]):Unit = {
-    if(from != null) to ++= from
-  }
-
-  def removeWatcher(clientPath:String, watcher:Watcher, watcherType:WatcherType, local:Boolean, rc:Int): Map[EventType, mutable.HashSet[Watcher]] = {
-    // Validate the provided znode path contains the given watcher of watcherType
-    containsWatcher(clientPath,watcher,watcherType)
-    val childWatchersToRem = mutable.HashSet[Watcher]()
-    val removedWatchers = new ConcurrentHashMap[EventType,mutable.HashSet[Watcher]]
-    removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem)
-    val dataWatchersToRem = mutable.HashSet[Watcher]()
-    removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem)
-    var removedWatcher: Boolean = false
-    var removedDataWatcher:Boolean = false
-    watcherType match {
-      case WatcherType.Children =>
-        removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
-      case WatcherType.Data =>
-        removedWatcher = removeWatches(dataWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-        removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-        removedWatcher |= removedDataWatcher
-      case WatcherType.Any =>
-        removedWatcher = removeWatches(childWatches,watcher,clientPath,local,rc,childWatchersToRem)
-        removedDataWatcher = removeWatches(dataWatches,watcher,clientPath,local,dataWatchersToRem)
-        removedWatcher |= removedDataWatcher
-        removedDataWatcher = removeWatches(existWatches,watcher,clientPath,local,rc,dataWatchersToRem)
-        removedWatcher |= removedDataWatcher
-    }
-    if(!removedWatcher) throw NoWatcherException(clientPath)
-    removedWatchers.asScala.toMap
-  }
-
-  private def contains(path:String, watcherObj:Watcher, pathVsWatchers:ConcurrentHashMap[String, mutable.HashSet[Watcher]]): Boolean = {
-    var watcherExists:Boolean = true
-    var watchers: mutable.HashSet[Watcher] = null
-
-    if(pathVsWatchers == null || pathVsWatchers.isEmpty) watcherExists = false
-    else {
-      watchers = pathVsWatchers.get(path)
-      if(watchers.isEmpty) watcherExists = false
-      else if (watcherObj == null) watcherExists = watchers.nonEmpty
-      else watcherExists = watchers.contains(watcherObj)
-    }
-    watcherExists
-  }
-
-  def containsWatcher(path: String, watcher: Watcher, watcherType: Watcher.Event.WatcherType):Unit = {
-    var containsWatcher = false
-    var containsTemp = false
-    watcherType match {
-      case WatcherType.Children =>
-        containsWatcher = contains(path, watcher,childWatches)
-      case WatcherType.Data =>
-        containsWatcher = contains(path, watcher,dataWatches)
-        containsTemp = contains(path,watcher,existWatches)
-        containsWatcher |= containsTemp
-      case WatcherType.Any =>
-        containsWatcher = contains(path,watcher,childWatches)
-        containsTemp = contains(path,watcher,dataWatches)
-        containsWatcher |= containsTemp
-        containsTemp = contains(path,watcher,existWatches)
-        containsWatcher |= containsTemp
-    }
-    if(!containsWatcher) throw NoWatcherException(path)
-  }
-
-  protected def removeWatches(pathVsWatcher: ConcurrentHashMap[String, mutable.HashSet[Watcher]], watcher: Watcher, path: String, local: Boolean, rc: Int, removedWatchers: mutable.HashSet[Watcher]):Boolean = {
-    if(!local && rc != Code.OK.value) throw KeeperException(Some(KeeperException.Code.withValue(rc)),Option(path))
-    var success = false
-    if(rc == Code.OK.value || (local && rc != Code.OK.value)) {
-      if(watcher == null) {
-        var pathWatchers = pathVsWatcher.remove(path)
-        if(pathWatchers != null) {
-          removedWatchers ++= pathWatchers
-          success = true
-        }
-      } else {
-
-      }
-    }
-  }
-}
-object ZKWatchManager {
-   def defaultWatcher:Watcher = ???
-}

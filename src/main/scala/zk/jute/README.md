@@ -1,7 +1,7 @@
-#Hadoop Record I/O
+# Hadoop Record I/O
 Hadoop record I/O contains classes and a record description language translator for simplifying serialization and deserialization of records in a language-neutral manner.
 
-##Introduction
+## Introduction
 Software systems of any significant complexity require mechanisms for data interchange with the outside world. These interchanges typically involve the
 marshaling and unmarshaling of logical units of data to and from data streams
 (files, network connections, memory buffers etc.). Applications usually have
@@ -35,7 +35,7 @@ can invoke in order to read/write their data from/to simple stream
 abstractions. Next we list explicitly some of the goals and non-goals of
 Hadoop Record I/O.
 
-###Goals
+### Goals
 * Support for commonly used primitive types. Hadoop should include as
   primitives commonly used builtin types from programming languages we intend to
   support.
@@ -56,7 +56,7 @@ Hadoop Record I/O.
   records. This version of the document does not include a description of the
   planned mechanism, we intend to include it in the next iteration.
 
-###Non-Goals
+### Non-Goals
 * Serializing existing arbitrary C++ classes.
 * Serializing complex data structures such as trees, linked lists etc.
 * Built-in indexing schemes, compression, or check-sums.
@@ -71,12 +71,12 @@ fairly complete description of C++ mappings with intent to include Java and
 others in upcoming iterations of this document. The last section talks about
 supported output encodings.
 
-##Data Types and Streams
+## Data Types and Streams
 This section describes the primitive and composite types supported by Hadoop.
 We aim to support a set of types that can be used to simply and efficiently
 express a wide range of record types in different programming languages.
 
-###Primitive Types
+### Primitive Types
 For the most part, the primitive types of Hadoop map directly to primitive
 types in high level programming languages. Special cases are the
 ustring (a Unicode string) and buffer types, which we believe
@@ -94,7 +94,7 @@ adopted "standard" implementation. The complete list of primitive types is:
 * ustring: A string consisting of Unicode characters.
 * buffer: An arbitrary sequence of bytes.
 
-###Composite Types
+### Composite Types
 Hadoop supports a small set of composite types that enable the description
 of simple aggregate types and containers. A composite type is serialized
 by sequentially serializing it constituent elements. The supported
@@ -126,12 +126,12 @@ concrete implementations of these by putting a one method wrapper around
 an existing stream implementation.
 
 
-##DDL Syntax and Examples
+## DDL Syntax and Examples
 
 We now describe the syntax of the Hadoop data description language. This is
 followed by a few examples of DDL usage.
 
-###Hadoop DDL Syntax
+### Hadoop DDL Syntax
 
 <pre><code>
 recfile = *include module *record

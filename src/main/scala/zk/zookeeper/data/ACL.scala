@@ -2,7 +2,8 @@ package zk.zookeeper.data
 
 import java.io.{DataInput, DataOutput}
 
-import zk.jute.{InputArchive, OutputArchive, Record}
+import zk.io.{InputArchive, OutputArchive}
+import zk.jute.Record
 import zk.zookeeper.Jute
 
 case class ACL(perms:Int, id:Id) extends Jute with Record {

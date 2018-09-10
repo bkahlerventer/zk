@@ -1,6 +1,7 @@
 package zk.zookeeper.proto
 
-import zk.jute.{InputArchive, OutputArchive, Record}
+import zk.io.{InputArchive, OutputArchive}
+import zk.jute.Record
 import zk.zookeeper.data.ACL
 
 case class CreateRequest(path:String, data:Array[Byte], acl:Vector[ACL], flags:Int) extends Record {

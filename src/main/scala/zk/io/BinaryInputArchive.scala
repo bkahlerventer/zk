@@ -1,4 +1,4 @@
-package zk.jute
+package zk.io
 
 import java.io.{DataInput, DataInputStream, IOException, InputStream}
 import java.lang.Integer.getInteger
@@ -38,7 +38,7 @@ class BinaryInputArchive(din:DataInput) extends InputArchive {
   }
 
   override def readRecord(r: Record, tag: String): Unit = r.deserialize(this, tag)
-  override def startRecord(r: Record, tag: String): Unit = {}
+  override def startRecord(tag: String): Unit = {}
   override def endRecord(tag: String): Unit = {}
 
   override def startVector(tag: String): Index = {

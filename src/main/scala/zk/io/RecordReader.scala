@@ -1,6 +1,8 @@
-package zk.jute
+package zk.io
 
 import java.io.InputStream
+
+import zk.jute.XmlInputArchive
 
 
 class RecordReader(in:InputStream, format:String) {

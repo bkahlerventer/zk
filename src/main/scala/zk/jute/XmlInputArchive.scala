@@ -1,12 +1,12 @@
 package zk.jute
 
 import java.io.{IOException, InputStream}
+
 import javax.xml.parsers.SAXParser
 import javax.xml.parsers.SAXParserFactory
-
-
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
+import zk.io.{Index, InputArchive, Utils}
 
 import scala.collection.mutable.ArrayBuffer
 

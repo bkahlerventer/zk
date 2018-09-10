@@ -2,7 +2,8 @@ package zk.zookeeper.data
 
 import java.io.{DataInput, DataOutput}
 
-import zk.jute.{InputArchive, OutputArchive, Record}
+import zk.io.{InputArchive, OutputArchive}
+import zk.jute.Record
 import zk.zookeeper.Jute
 
 case class Stat(czxid:Long, mzxid:Long, ctime:Long, mtime:Long, version:Int, cversion:Int, aversion:Int, ephemeralOwner:Long, dataLength:Int, numChildren:Int, pzxid:Long) extends Jute with Record {

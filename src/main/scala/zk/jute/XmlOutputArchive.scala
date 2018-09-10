@@ -2,6 +2,8 @@ package zk.jute
 
 import java.io.{IOException, OutputStream, PrintStream}
 
+import zk.io.{OutputArchive, Utils}
+
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
