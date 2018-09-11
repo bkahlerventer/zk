@@ -1,7 +1,7 @@
 package zk.zookeeper.common
 
 import com.typesafe.scalalogging.Logger
-import java.io.{Closeable, InputStream, OutputStream}
+import java.io._
 
 import scala.util.control.NonFatal
 
@@ -33,7 +33,21 @@ object IOUtils {
     }
   }
 
-  def copyBytes(in:InputStream, out:OutputStream, buffSize:Int): Unit = ???
+  def copyBytes(in:InputStream, out:OutputStream, buffSize:Int): Unit = {
+    val ps: PrintStream = out match {
+      case p: PrintStream => p
+      case _ => null
+    }
+    val buf: Array[Byte] = new Array[Byte](buffSize)
+    var bytesRead:Int = in.read(buf)
 
-
+    while(bytesRead >= 0) {
+      out.write(buf, 0, bytesRead)
+      if((ps != null) && ps.checkError()) {
+        throw new IOException("Unable to write to output stream.")
+      }
+      bytesRead = in.read(buf)
+    }
+  }
 }
+

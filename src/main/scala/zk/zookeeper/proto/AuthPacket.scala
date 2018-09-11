@@ -7,9 +7,9 @@ import zk.io._
 class AuthPacket(_type:Int, _scheme:String, _auth:Array[Byte]) extends Record {
   import AuthPacket._
 
-  private var ztype = _type
-  private var scheme = _scheme
-  private var auth = _auth
+  private var ztype:Int = _type
+  private var scheme:String = _scheme
+  private var auth:Array[Byte] = _auth
 
 
   override def serialize(archive: OutputArchive, tag: String): Unit = {
@@ -30,8 +30,8 @@ class AuthPacket(_type:Int, _scheme:String, _auth:Array[Byte]) extends Record {
 
   override def toString: String = {
     try {
-      var s = new ByteArrayOutputStream()
-      var a = new CsvOutputArchive(s)
+      val s = new ByteArrayOutputStream()
+      val a = new CsvOutputArchive(s)
       a.startRecord(this, "")
       a.writeInt(ztype, "type")
       a.writeString(scheme, "scheme")
