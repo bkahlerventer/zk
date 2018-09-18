@@ -2,9 +2,6 @@ package zk.zookeeper.common
 
 import java.net.{Inet6Address, InetAddress, InetSocketAddress}
 
-class Netutils {
-
-}
 
 object Netutils {
   def formatInetAddr(addr:InetSocketAddress):String = {
