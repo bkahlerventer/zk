@@ -1,9 +1,9 @@
 package zk.zookeeper.common
 
-import collection.JavaConverters._
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import java.util.concurrent.ConcurrentHashMap
 
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import scala.collection.concurrent
 
 

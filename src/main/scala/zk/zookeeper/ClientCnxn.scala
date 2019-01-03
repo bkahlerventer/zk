@@ -72,7 +72,14 @@ class ClientCnxn(chroot_path:String, host_provider: HostProvider, session_timeou
 
   private var seenRwServerBefore = false
 
-  private var zooKeeperSaslClient: Option[ZooKeeperSaslClient] = None
+  private[this] var _zooKeeperSaslClient: Option[ZooKeeperSaslClient] = None
+
+  def zooKeeperSaslClient: Option[ZooKeeperSaslClient] = _zooKeeperSaslClient
+
+  def zooKeeperSaslClient_=(value: Option[ZooKeeperSaslClient]): Unit = {
+    _zooKeeperSaslClient = value
+  }
+
   private var requestTimeout: Long = initRequestTimeout
 
 
